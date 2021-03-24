@@ -1,2 +1,2 @@
-# internship-program
+# take home challenge
 Quarks internship Program Instructions
