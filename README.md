@@ -80,4 +80,6 @@ We have provided help with the git workflow but now your project is done and has
 
 ## Note
 
-Your should indicate where your project is hosted in your portofolio's footer.
+* Your should indicate where your project is hosted in your portofolio's footer.
+* If you encounter a challenge you can open an issue on this repository and decribe your problem. You can even include some screenshots.![Screenshot from 2021-03-26 09-36-43](https://user-images.githubusercontent.com/17580572/112598156-d7731400-8e16-11eb-9ee1-46b4de5c88fc.png)
+* Remember reading, understanding and executing these instructions is part of the challenge.
