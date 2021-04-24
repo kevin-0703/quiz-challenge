@@ -23,7 +23,7 @@ Our objective is to verify the following elements before we can integrate you:
 2. Can you build beautiful interfaces?
 3. How fast can you deliver?
 4. Can you improve based on feedback?
-5. Can you use collaboration tools like git, GitHub and Trello?
+5. Can you use collaboration tools like git, GitHub?
 6. Can you read documentation?
 
 ## Instructions
