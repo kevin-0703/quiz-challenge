@@ -93,5 +93,6 @@ We have provided help with the git workflow but now your project is done and has
 ## Note
 
 * Your should indicate where your project is hosted in your challenge's footer.
+* Your fork that has your code should add a section with instructions on how someone could run your porject on their own machine. And you should assume that their laptop is brand with nothing but the operating system which could be Linux, Windows or MacOS. Which means you must provide instructions for all.
 * If you encounter a challenge you can open an issue on this repository and decribe your problem. You can even include some screenshots.![screenshot](https://user-images.githubusercontent.com/17580572/112598156-d7731400-8e16-11eb-9ee1-46b4de5c88fc.png)
 * Remember reading, understanding and executing these instructions is part of the challenge.
