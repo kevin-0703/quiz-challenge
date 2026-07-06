@@ -3,6 +3,7 @@ from .models import User
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = User
@@ -10,6 +11,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = (
             "username", "first_name", "last_name", "email", "password",
         )
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("email already exists")
+        return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists")
+        return value
+
+
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
