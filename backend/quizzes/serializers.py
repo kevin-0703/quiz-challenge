@@ -5,15 +5,22 @@ class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
         fields = (
-            "id", "text", "is_correct",
+            "id", "question","text", "is_correct",
         )
+
+        def validate(self, attrs):
+            question = attrs["question"]
+
+            if question.quiz.is_published:
+                raise serializers.ValidationError("Published quizzes cannot be modified")
+            return attrs
 
 class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True)
     class Meta:
         model = Question
         fields = (
-            "id", "text", "marks","order", "choices",
+            "id", "text", "marks","order", "choices", "quiz",
         )
 
         def validate_choices(self, value):
@@ -25,6 +32,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
         def validate(self, attrs):
             choices = attrs.get("choices", [])
+            quiz = attrs["quiz"]
+            order = attrs["order"]
 
             correct_answers = sum(
                 choice["is_correct"] for choice in choices  
@@ -34,14 +43,20 @@ class QuestionSerializer(serializers.ModelSerializer):
                     "Each question must have one correct answer"
                 )
 
-                return attrs
+            return attrs
+            if quiz.questions.count() >= 7:
+                raise serializers.ValidationError("A quiz must have seven questions")
+            return attrs
+
+            if order not in range (1, 8):
+                raise serializers.ValidationError("Question order must be between 1 and 7")
 
 class QuizSerializer(serializers.ModelSerializer):
     creator_name = serializers.CharField(
         source = "creator.get_full_name", read_only=True,
     )
 
-    cretor_email = serializers.EmailField(
+    creator_email = serializers.EmailField(
         source = "creator.email", read_only=True,
     )
 

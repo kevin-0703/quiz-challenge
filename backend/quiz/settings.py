@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'users',
     'quizzes',
     'attempts',
-    'common',
+    
 ]
 
 MIDDLEWARE = [

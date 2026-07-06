@@ -20,6 +20,10 @@ class Question(models.Model):
     marks = models.PositiveIntegerField(default=10)
     order = models.PositiveIntegerField()
 
+    class Meta:
+        ordering = ["order"]
+        constraints = [models.UniqueConstraint(fields=["quiz", "order"], name="unique_question_order_per_quiz",)]
+
     def __str__(self):
         return self.text
 

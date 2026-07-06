@@ -45,6 +45,35 @@ class PublishQuizView(APIView):
 
     def post(self, request, pk):
         quiz = Quiz.objects.get(pk=pk, creator=request.user,)
+        questions = quiz.questions.all()
+        if questions.count() != 7:
+            return Response(
+                {"detail": "Quiz must contain exactly seven questions."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        for question in questions:
+            choices = question.choices.all()
+
+            if choices.count() < 4:
+                return Response(
+                    {
+                        "detail": (
+                            f'Question "{question.text}" must have at least four choices.'
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if choices.filter(is_correct=True).count() != 1:
+                return Response(
+                    {
+                        "detail": (
+                            f'Question "{question.text}" must have exactly one correct answer.'
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )        
         quiz.is_published=True
         quiz.save()
         return Response(
