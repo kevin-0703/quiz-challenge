@@ -44,7 +44,7 @@ class QuestionSerializer(serializers.ModelSerializer):
                 )
 
             return attrs
-            if quiz.questions.count() >= 7:
+            if quiz.questions.count() != 7:
                 raise serializers.ValidationError("A quiz must have seven questions")
             return attrs
 

@@ -1,4 +1,15 @@
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000/api
+    container_name: quiz_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
   backend:
     build:
       context: ./backend
@@ -19,9 +30,9 @@ services:
     container_name: quiz_postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-quiz_db}
+      POSTGRES_USER: ${DB_USER:-quiz_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quiz_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

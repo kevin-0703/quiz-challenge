@@ -71,6 +71,7 @@ class MeView(APIView):
         return Response(serializer.data)
 
 class RefreshTokenView(APIView):
+    print("refresh view reached")
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
