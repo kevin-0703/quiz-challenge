@@ -7,6 +7,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (LoginSerializer, RegisterSerializer, UserSerializer,)
 from .utils import set_auth_cookies
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.conf import settings
 # Create your views here.
 
 class RegisterView(APIView):
@@ -51,14 +53,14 @@ class LoginView(APIView):
         return response
 
 class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         response = Response(
             {"message": "Logged out successfully"}
         )
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token", path="/", samesite=settings.COOKIE_SAMESITE,)
+        response.delete_cookie("refresh_token", path="/", samesite=settings.COOKIE_SAMESITE,)
 
         return response
 
@@ -83,17 +85,31 @@ class RefreshTokenView(APIView):
             )
         try:
             refresh = RefreshToken(refresh_token)
+            from rest_framework_simplejwt.settings import api_settings
+            if api_settings.ROTATE_REFRESH_TOKENS:
+                if api_settings.BLACKLIST_AFTER_ROTATION:
+                    try:
+                        refresh.blacklist()
+                    except AttributeError:
+                        pass
+                refresh.set_jti()
+                refresh.set_exp()
+                refresh.set_iat()
+                new_refresh = str(refresh)
+            else:
+                new_refresh = refresh_token
+
             access_token = str(refresh.access_token)
             response = Response(
                 {"message": "Token refreshed"}
             )
-            response.set_cookie(
-                key="access_token", value=access_token, httponly=True, secure=False, samesite="Lax",
-            )
-
+            set_auth_cookies(response, access_token, new_refresh)
             return response
 
         except TokenError:
-            return Response(
+            response = Response(
                 {"error": "Invalid refresh token"}, status=status.HTTP_401_UNAUTHORIZED,
             )
+            response.delete_cookie("refresh_token", path="/",)
+            response.delete_cookie("access_token", path="/")
+            return response

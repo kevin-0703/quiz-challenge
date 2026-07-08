@@ -10,14 +10,14 @@ const items = [
   { label: "Settings", path: "/settings", icon: Settings },
 ];
 
-export default function Sidebar({ path, navigate, onLogout }) {
+export default function Sidebar({ path, navigate, user, onLogout }) {
   return (
     <aside className="hidden min-h-screen w-64 shrink-0 border-r border-outline bg-surface-low p-4 md:block">
       <button className="mb-8 px-3 text-xl font-bold text-primary" onClick={() => navigate("/")}>
         QuizHub
       </button>
       <nav className="space-y-1">
-        {items.map((item) => {
+        {items.filter(item => item.path !== "/admin" || user?.is_admin).map((item) => {
           const Icon = item.icon;
           const active = path === item.path;
           return (

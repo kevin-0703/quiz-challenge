@@ -49,7 +49,7 @@ export default function App() {
         </div>
       ) : (
         <div className="flex min-h-screen bg-surface">
-          <Sidebar path={route} navigate={navigate} onLogout={logout} />
+          <Sidebar path={route} navigate={navigate} user={user} onLogout={logout} />
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{content}</div>
           </main>
@@ -83,6 +83,9 @@ function renderRoute(route, props) {
     case "/results":
       return <ResultsPage navigate={props.navigate} />;
     case "/admin":
+      if (!props.user?.is_admin) {
+        return <LandingPage navigate={props.navigate} />;
+      }
       return <AdminPage />;
     case "/settings":
       return <SettingsPage />;

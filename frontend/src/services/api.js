@@ -1,7 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
+  console.log("Request body:", options.body);
+  const url = `${API_URL}${path}`;
+  let response = await fetch(url, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -10,6 +12,34 @@ async function request(path, options = {}) {
     ...options,
   });
 
+  if (
+    response.status === 401 &&
+    path !== "/auth/refresh/" &&
+    path !== "/auth/login/" &&
+    path !== "/auth/register/"
+  ) {
+    try {
+      const refreshResponse = await fetch(`${API_URL}/auth/refresh/`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (refreshResponse.ok) {
+        response = await fetch(`${API_URL}${path}`, {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+          ...options,
+        });
+      } else {
+        await request("/auth/logout/", { method: "POST" });
+      }
+    } catch (refreshError) {
+      console.error("Token refresh failed:", refreshError);
+    }
+  }
+
   let data = null;
   const text = await response.text();
   if (text) {
@@ -17,7 +47,8 @@ async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message = data?.detail || data?.error || data?.message || "Request failed";
+    const message =
+      data?.detail || data?.error || data?.message || "Request failed";
     throw new Error(message);
   }
 
@@ -64,8 +95,13 @@ export const api = {
   deleteQuiz(id) {
     return request(`/quizzes/${id}/delete/`, { method: "DELETE" });
   },
-  publishQuiz(id) {
-    return request(`/quizzes/${id}/publish/`, { method: "POST" });
+  publishQuiz(id, payload) {
+    console.log("publish payload:", payload);
+
+    return request(`/quizzes/${id}/publish/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
   getQuiz(id) {
     return request(`/quizzes/${id}/`);
