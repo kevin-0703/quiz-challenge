@@ -12,10 +12,16 @@ import { api } from "../services/api.js";
 
 export function QuizSetupPage({ navigate }) {
   const quizId = new URLSearchParams(window.location.search).get("id");
-  const [form, setForm] = useState({ participant_name: "", participant_email: "" });
+  const [form, setForm] = useState({
+    participant_name: "",
+    participant_email: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { data: quiz, loading: quizLoading } = useAsync(() => api.getQuiz(quizId), [quizId]);
+  const { data: quiz, loading: quizLoading } = useAsync(
+    () => api.getQuizForTaking(quizId),
+    [quizId],
+  );
 
   const start = async (event) => {
     event.preventDefault();
@@ -36,17 +42,35 @@ export function QuizSetupPage({ navigate }) {
   return (
     <div className="mx-auto max-w-3xl">
       <Card>
-        <CardHeader title={quiz?.title || "Quiz setup"} description={quiz?.description || "Enter your details before starting."} />
+        <CardHeader
+          title={quiz?.title || "Quiz setup"}
+          description={
+            quiz?.description || "Enter your details before starting."
+          }
+        />
         <form className="space-y-5 p-5" onSubmit={start}>
           <div className="flex items-center gap-3 rounded bg-surface-low px-4 py-3 text-sm text-secondary">
             <Clock size={18} className="text-primary" />
             You will have 10 minutes once the attempt starts.
           </div>
           <FormField label="Participant name">
-            <Input value={form.participant_name} onChange={(event) => setForm({ ...form, participant_name: event.target.value })} required />
+            <Input
+              value={form.participant_name}
+              onChange={(event) =>
+                setForm({ ...form, participant_name: event.target.value })
+              }
+              required
+            />
           </FormField>
           <FormField label="Participant email">
-            <Input type="email" value={form.participant_email} onChange={(event) => setForm({ ...form, participant_email: event.target.value })} required />
+            <Input
+              type="email"
+              value={form.participant_email}
+              onChange={(event) =>
+                setForm({ ...form, participant_email: event.target.value })
+              }
+              required
+            />
           </FormField>
           {error ? <p className="text-sm text-error">{error}</p> : null}
           <Button className="w-full" type="submit" disabled={loading}>
@@ -65,7 +89,10 @@ export function TakingQuizPage({ navigate }) {
   const [answers, setAnswers] = useState({});
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { data: quiz, loading } = useAsync(() => api.getQuiz(quizId), [quizId]);
+  const { data: quiz, loading } = useAsync(
+    () => api.getQuizForTaking(quizId),
+    [quizId],
+  );
   const questions = quiz?.questions || [];
 
   const submit = async () => {
@@ -99,9 +126,18 @@ export function TakingQuizPage({ navigate }) {
     <div className="space-y-5">
       <Card className="overflow-hidden">
         <div className="h-1.5 bg-surface-container">
-          <div className="h-full bg-primary-soft" style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }} />
+          <div
+            className="h-full bg-primary-soft"
+            style={{
+              width: `${(Object.keys(answers).length / questions.length) * 100}%`,
+            }}
+          />
         </div>
-        <CardHeader title={quiz.title} description={`${Object.keys(answers).length} of ${questions.length} answered`} action={<Badge variant="warning">10 min</Badge>} />
+        <CardHeader
+          title={quiz.title}
+          description={`${Object.keys(answers).length} of ${questions.length} answered`}
+          action={<Badge variant="warning">10 min</Badge>}
+        />
       </Card>
       {questions.map((question, index) => (
         <Card key={question.id} className="p-5">
@@ -109,12 +145,17 @@ export function TakingQuizPage({ navigate }) {
           <h2 className="mt-3 font-semibold">{question.text}</h2>
           <div className="mt-4 grid gap-2">
             {question.choices.map((choice) => (
-              <label key={choice.id} className="flex cursor-pointer items-center gap-3 rounded border border-outline px-4 py-3 hover:bg-surface-low">
+              <label
+                key={choice.id}
+                className="flex cursor-pointer items-center gap-3 rounded border border-outline px-4 py-3 hover:bg-surface-low"
+              >
                 <input
                   type="radio"
                   name={`question-${question.id}`}
                   checked={answers[question.id] === choice.id}
-                  onChange={() => setAnswers({ ...answers, [question.id]: choice.id })}
+                  onChange={() =>
+                    setAnswers({ ...answers, [question.id]: choice.id })
+                  }
                 />
                 <span className="text-sm">{choice.text}</span>
               </label>
@@ -123,7 +164,11 @@ export function TakingQuizPage({ navigate }) {
         </Card>
       ))}
       {error ? <p className="text-sm text-error">{error}</p> : null}
-      <Button icon={Send} onClick={submit} disabled={submitting || !Object.keys(answers).length}>
+      <Button
+        icon={Send}
+        onClick={submit}
+        disabled={submitting || !Object.keys(answers).length}
+      >
         {submitting ? "Submitting..." : "Submit Quiz"}
       </Button>
     </div>
@@ -147,9 +192,13 @@ export function ResultsPage({ navigate }) {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <Card className="p-6 text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary">Quiz complete</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+          Quiz complete
+        </p>
         <h1 className="mt-3 text-4xl font-bold">{result.score} points</h1>
-        <p className="mt-2 text-sm text-secondary">Submitted by {result.participant_name}</p>
+        <p className="mt-2 text-sm text-secondary">
+          Submitted by {result.participant_name}
+        </p>
       </Card>
       <div className="grid gap-4 sm:grid-cols-3">
         <ResultMetric label="Questions" value={result.total_questions} />

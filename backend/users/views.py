@@ -110,6 +110,6 @@ class RefreshTokenView(APIView):
             response = Response(
                 {"error": "Invalid refresh token"}, status=status.HTTP_401_UNAUTHORIZED,
             )
-            response.delete_cookie("refresh_token", path="/",)
-            response.delete_cookie("access_token", path="/")
+            response.delete_cookie("refresh_token", path="/", samesite=settings.COOKIE_SAMESITE)
+            response.delete_cookie("access_token", path="/", samesite=settings.COOKIE_SAMESITE)
             return response

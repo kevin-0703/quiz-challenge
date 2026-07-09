@@ -5,6 +5,7 @@ import Card, { CardHeader } from "../components/ui/Card.jsx";
 import FormField from "../components/ui/FormField.jsx";
 import Input from "../components/ui/Input.jsx";
 import { api } from "../services/api.js";
+import QuizBuilderPage from "./QuizBuilderPage.jsx";
 
 export default function CreateQuizPage({ navigate }) {
   const [form, setForm] = useState({ title: "", description: "" });
@@ -17,6 +18,7 @@ export default function CreateQuizPage({ navigate }) {
     setError("");
     try {
       const quiz = await api.createQuiz(form);
+
       navigate(`/builder?id=${quiz.id}`);
     } catch (err) {
       setError(err.message);
@@ -28,16 +30,28 @@ export default function CreateQuizPage({ navigate }) {
   return (
     <div className="mx-auto max-w-3xl">
       <Card>
-        <CardHeader title="Create quiz" description="Start with the basic quiz information saved by the backend." />
+        <CardHeader
+          title="Create quiz"
+          description="Start with the basic quiz information saved by the backend."
+        />
         <form className="space-y-5 p-5" onSubmit={submit}>
           <FormField label="Quiz title">
-            <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required placeholder="Modern Architecture" />
+            <Input
+              value={form.title}
+              onChange={(event) =>
+                setForm({ ...form, title: event.target.value })
+              }
+              required
+              placeholder="Modern Architecture"
+            />
           </FormField>
           <FormField label="Description">
             <textarea
               className="focus-ring min-h-32 w-full rounded border border-outline bg-white px-3 py-2 text-sm"
               value={form.description}
-              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              onChange={(event) =>
+                setForm({ ...form, description: event.target.value })
+              }
               required
               placeholder="Describe the quiz goal and audience."
             />

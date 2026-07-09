@@ -8,12 +8,12 @@ class ChoiceSerializer(serializers.ModelSerializer):
             "id", "question","text", "is_correct",
         )
 
-        def validate(self, attrs):
-            question = attrs["question"]
+    def validate(self, attrs):
+        question = attrs["question"]
 
-            if question.quiz.is_published:
-                raise serializers.ValidationError("Published quizzes cannot be modified")
-            return attrs
+        if question.quiz.is_published:
+            raise serializers.ValidationError("Published quizzes cannot be modified")
+        return attrs
 
 class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True)
@@ -23,33 +23,33 @@ class QuestionSerializer(serializers.ModelSerializer):
             "id", "text", "marks","order", "choices", "quiz",
         )
 
-        def validate_choices(self, value):
-            if len(value) < 4:
-                raise serializers.ValidationError (
-                    "Each question must have a minimum of four choices"
-                )
-            return value
-
-        def validate(self, attrs):
-            choices = attrs.get("choices", [])
-            quiz = attrs["quiz"]
-            order = attrs["order"]
-
-            correct_answers = sum(
-                choice["is_correct"] for choice in choices  
+    def validate_choices(self, value):
+        if len(value) < 4:
+            raise serializers.ValidationError (
+                "Each question must have a minimum of four choices"
             )
-            if correct_answers != 1:
-                raise serializers.ValidationError(
-                    "Each question must have one correct answer"
-                )
+        return value
 
-            return attrs
-            if quiz.questions.count() != 7:
-                raise serializers.ValidationError("A quiz must have seven questions")
-            return attrs
+    def validate(self, attrs):
+        choices = attrs.get("choices", [])
+        quiz = attrs["quiz"]
+        order = attrs["order"]
 
-            if order not in range (1, 8):
-                raise serializers.ValidationError("Question order must be between 1 and 7")
+        correct_answers = sum(
+            choice["is_correct"] for choice in choices  
+        )
+        if correct_answers != 1:
+            raise serializers.ValidationError(
+                "Each question must have one correct answer"
+            )
+
+        return attrs
+        if quiz.questions.count() != 7:
+            raise serializers.ValidationError("A quiz must have seven questions")
+        return attrs
+
+        if order not in range (1, 8):
+            raise serializers.ValidationError("Question order must be between 1 and 7")
 
 class QuizSerializer(serializers.ModelSerializer):
     creator_name = serializers.CharField(
@@ -78,9 +78,31 @@ class QuizDetailSerializer(serializers.ModelSerializer):
             "id", "title", "description", "creator_name", "questions",
         )
 
-        def validate_question(self, value):
-            if len(value) != 7:
-                raise serializers.ValidationError(
-                    "A quiz must have exctly seven questions"
-                )
-                return value
+    def validate_question(self, value):
+        if len(value) != 7:
+            raise serializers.ValidationError(
+                "A quiz must have exctly seven questions"
+            )
+            return value
+
+class PublicChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ("id", "text")  # deliberately omits is_correct
+
+
+class PublicQuestionSerializer(serializers.ModelSerializer):
+    choices = PublicChoiceSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ("id", "text", "marks", "order", "choices")
+
+
+class PublicQuizDetailSerializer(serializers.ModelSerializer):
+    questions = PublicQuestionSerializer(many=True)
+    creator_name = serializers.CharField(source="creator.get_full_name", read_only=True)
+
+    class Meta:
+        model = Quiz
+        fields = ("id", "title", "description", "creator_name", "questions")

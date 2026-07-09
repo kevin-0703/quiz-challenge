@@ -122,7 +122,7 @@ export default function QuizBuilderPage({ navigate }) {
               </Button>
               <Button
                 icon={Upload}
-                disabled={questions.length !== 7}
+                disabled={questions.length !== 7 || questions.length > 7}
                 onClick={publish}
               >
                 Publish

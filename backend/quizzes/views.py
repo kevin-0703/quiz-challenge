@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Quiz, Question, Choice
-from .serializers import QuizSerializer
+from .serializers import QuizSerializer, PublicQuizDetailSerializer
 from .permissions import IsQuizOwner
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
@@ -96,40 +96,10 @@ class PublishQuizView(APIView):
         return Response (
             {"message": "Quiz published successfully"}, status=status.HTTP_200_OK,
         )
-        """
-        questions = quiz.questions.all()
-        if questions.count() != 7:
-            return Response(
-                {"detail": "Quiz must contain exactly seven questions."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
-        for question in questions:
-            choices = question.choices.all()
+class TakeQuizView(generics.RetrieveAPIView):
+    serializer_class = PublicQuizDetailSerializer
+    permission_classes = [permissions.AllowAny]
 
-            if choices.count() < 4:
-                return Response(
-                    {
-                        "detail": (
-                            f'Question "{question.text}" must have at least four choices.'
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            if choices.filter(is_correct=True).count() != 1:
-                return Response(
-                    {
-                        "detail": (
-                            f'Question "{question.text}" must have exactly one correct answer.'
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        quiz.save()        
-        quiz.is_published=True
-        
-        return Response(
-            {"message": "Quiz published successfully"}, status=status.HTTP_200_OK,
-        )
-        """
+    def get_queryset(self):
+        return Quiz.objects.filter(is_published=True)

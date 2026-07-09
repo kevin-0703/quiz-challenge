@@ -1,9 +1,32 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-async function request(path, options = {}) {
-  console.log("Request body:", options.body);
+// --- single-flight refresh lock ---
+// Ensures that if multiple requests 401 at the same time, only ONE
+// call to /auth/refresh/ actually happens. Every other caller just
+// awaits the same in-flight promise.
+let refreshPromise = null;
+
+function doRefresh() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_URL}/auth/refresh/`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((res) => {
+        refreshPromise = null;
+        return res;
+      })
+      .catch((err) => {
+        refreshPromise = null;
+        throw err;
+      });
+  }
+  return refreshPromise;
+}
+
+async function request(path, options = {}, _isRetry = false) {
   const url = `${API_URL}${path}`;
-  let response = await fetch(url, {
+  const response = await fetch(url, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -12,32 +35,32 @@ async function request(path, options = {}) {
     ...options,
   });
 
-  if (
-    response.status === 401 &&
-    path !== "/auth/refresh/" &&
-    path !== "/auth/login/" &&
-    path !== "/auth/register/"
-  ) {
+  const isAuthEndpoint =
+    path === "/auth/refresh/" ||
+    path === "/auth/login/" ||
+    path === "/auth/register/";
+
+  if (response.status === 401 && !isAuthEndpoint && !_isRetry) {
+    let refreshOk = false;
     try {
-      const refreshResponse = await fetch(`${API_URL}/auth/refresh/`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (refreshResponse.ok) {
-        response = await fetch(`${API_URL}${path}`, {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-          },
-          ...options,
-        });
-      } else {
-        await request("/auth/logout/", { method: "POST" });
-      }
+      const refreshResponse = await doRefresh();
+      refreshOk = refreshResponse.ok;
     } catch (refreshError) {
-      console.error("Token refresh failed:", refreshError);
+      refreshOk = false;
     }
+
+    if (refreshOk) {
+      // Retry the original request exactly once. _isRetry=true stops
+      // us from looping forever if it 401s again.
+      return request(path, options, true);
+    }
+
+    // Refresh genuinely failed (refresh token expired/blacklisted/invalid).
+    // Don't call the API again here — just clear client state and let the
+    // caller / app-level auth context redirect to login.
+    const authError = new Error("Session expired. Please log in again.");
+    authError.isAuthError = true;
+    throw authError;
   }
 
   let data = null;
@@ -96,8 +119,6 @@ export const api = {
     return request(`/quizzes/${id}/delete/`, { method: "DELETE" });
   },
   publishQuiz(id, payload) {
-    console.log("publish payload:", payload);
-
     return request(`/quizzes/${id}/publish/`, {
       method: "POST",
       body: JSON.stringify(payload),
@@ -105,6 +126,9 @@ export const api = {
   },
   getQuiz(id) {
     return request(`/quizzes/${id}/`);
+  },
+  getQuizForTaking(id) {
+    return request(`/quizzes/${id}/takequiz/`);
   },
   startAttempt(payload) {
     return request("/attempts/start/", {
