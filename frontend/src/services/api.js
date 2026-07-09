@@ -109,6 +109,7 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
   updateQuiz(id, payload) {
     return request(`/quizzes/${id}/update/`, {
       method: "PUT",
@@ -125,7 +126,7 @@ export const api = {
     });
   },
   getQuiz(id) {
-    return request(`/quizzes/${id}/`);
+    return request(`/quizzes/${id}/update/`);
   },
   getQuizForTaking(id) {
     return request(`/quizzes/${id}/takequiz/`);

@@ -1,11 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .models import Quiz, Question, Choice
-from .serializers import QuizSerializer, PublicQuizDetailSerializer
+from .serializers import QuizSerializer, PublicQuizDetailSerializer, QuizDetailSerializer
 from .permissions import IsQuizOwner
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db import transaction
+
 # Create your views here.
 class QuizListView(generics.ListAPIView):
     serializer_class = QuizSerializer
@@ -30,16 +31,37 @@ class QuizCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+        """
 
 class QuizDetailView(generics.RetrieveAPIView):
     serializer_class = QuizSerializer
     queryset = Quiz.objects.all()
     permission_classes = [permissions.AllowAny]
+    """
 
-class QuizUpdateView(generics.UpdateAPIView):
-    serializer_class = QuizSerializer
-    queryset = Quiz.objects.all()
-    permission_classes = [permissions.IsAuthenticated, IsQuizOwner,]
+class QuizUpdateView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsQuizOwner,
+    ]
+
+    def put(self, request, pk):
+
+        quiz = get_object_or_404(
+            Quiz,
+            pk=pk,
+            creator=request.user
+        )
+
+        serializer = QuizDetailSerializer(
+            quiz,
+            data=request.data
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
 
 class QuizDeleteView(generics.DestroyAPIView):
     queryset = Quiz.objects.all()
@@ -103,3 +125,12 @@ class TakeQuizView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Quiz.objects.filter(is_published=True)
+
+class QuizDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = QuizDetailSerializer
+    permission_classes = [permissions.IsAuthenticated, IsQuizOwner]
+
+    def get_queryset(self):
+        return Quiz.objects.prefetch_related(
+            "questions__choices"
+        )

@@ -106,3 +106,52 @@ class PublicQuizDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
         fields = ("id", "title", "description", "creator_name", "questions")
+
+class QuizDetailSerializer(serializers.ModelSerializer):
+
+    questions = QuestionSerializer(many=True)
+
+    class Meta:
+        model = Quiz
+        fields = (
+            "id",
+            "title",
+            "description",
+            "questions",
+        )
+
+    def update(self, instance, validated_data):
+
+        questions_data = validated_data.pop("questions")
+
+        instance.title = validated_data.get(
+            "title",
+            instance.title,
+        )
+
+        instance.description = validated_data.get(
+            "description",
+            instance.description,
+        )
+
+        instance.save()
+
+        instance.questions.all().delete()
+
+        for order, question_data in enumerate(questions_data, start=1):
+
+            choices_data = question_data.pop("choices")
+
+            question = Question.objects.create(
+                quiz=instance,
+                order=order,
+             **question_data
+            )
+
+            for choice_data in choices_data:
+                Choice.objects.create(
+                    question=question,
+                    **choice_data
+                )
+
+        return instance
