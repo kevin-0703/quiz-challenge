@@ -35,7 +35,7 @@ export default function DashboardPage({ navigate, user }) {
     setEditError("");
 
     try {
-      const fullQuiz = await api.getQuiz(quiz.id);
+      const fullQuiz = await api.getQuizForEdit(quiz.id);
 
       setEditingQuiz(fullQuiz);
       setEditForm(fullQuiz);
@@ -172,123 +172,126 @@ export default function DashboardPage({ navigate, user }) {
           </div>
         }
       >
-        <form
-          className="space-y-6 max-h-[75vh] overflow-y-auto pr-2"
-          onSubmit={handleEditSubmit}
-        >
-          {/* Quiz Details */}
+        {editForm && (
+          <form
+            className="space-y-6 max-h-[75vh] overflow-y-auto pr-2"
+            onSubmit={handleEditSubmit}
+          >
+            {/* Quiz Details */}
 
-          <FormField label="Quiz Title">
-            <Input
-              value={editForm.title}
-              onChange={(e) =>
-                setEditForm({
-                  ...editForm,
-                  title: e.target.value,
-                })
-              }
-              required
-            />
-          </FormField>
+            <FormField label="Quiz Title">
+              <Input
+                value={editForm.title}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    title: e.target.value,
+                  })
+                }
+                required
+              />
+            </FormField>
 
-          <FormField label="Description">
-            <textarea
-              className="focus-ring min-h-32 w-full rounded border border-outline bg-white px-3 py-2 text-sm"
-              value={editForm.description}
-              onChange={(e) =>
-                setEditForm({
-                  ...editForm,
-                  description: e.target.value,
-                })
-              }
-              required
-            />
-          </FormField>
+            <FormField label="Description">
+              <textarea
+                className="focus-ring min-h-32 w-full rounded border border-outline bg-white px-3 py-2 text-sm"
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    description: e.target.value,
+                  })
+                }
+                required
+              />
+            </FormField>
 
-          {/* Questions */}
+            {/* Questions */}
 
-          {editForm.questions?.map((question, qIndex) => (
-            <Card key={question.id} className="p-5">
-              <h3 className="mb-4 font-semibold">Question {qIndex + 1}</h3>
+            {editForm.questions?.map((question, qIndex) => (
+              <Card key={question.id} className="p-5">
+                <h3 className="mb-4 font-semibold">Question {qIndex + 1}</h3>
 
-              <FormField label="Question">
-                <Input
-                  value={question.text}
-                  onChange={(e) => {
-                    const questions = [...editForm.questions];
-                    questions[qIndex].text = e.target.value;
+                <FormField label="Question">
+                  <Input
+                    value={question.text}
+                    onChange={(e) => {
+                      const questions = [...editForm.questions];
+                      questions[qIndex].text = e.target.value;
 
-                    setEditForm({
-                      ...editForm,
-                      questions,
-                    });
-                  }}
-                />
-              </FormField>
+                      setEditForm({
+                        ...editForm,
+                        questions,
+                      });
+                    }}
+                  />
+                </FormField>
 
-              <FormField label="Marks">
-                <Input
-                  type="number"
-                  min="1"
-                  value={question.marks}
-                  onChange={(e) => {
-                    const questions = [...editForm.questions];
-                    questions[qIndex].marks = Number(e.target.value);
+                <FormField label="Marks">
+                  <Input
+                    type="number"
+                    min="1"
+                    value={question.marks}
+                    onChange={(e) => {
+                      const questions = [...editForm.questions];
+                      questions[qIndex].marks = Number(e.target.value);
 
-                    setEditForm({
-                      ...editForm,
-                      questions,
-                    });
-                  }}
-                />
-              </FormField>
+                      setEditForm({
+                        ...editForm,
+                        questions,
+                      });
+                    }}
+                  />
+                </FormField>
 
-              <div className="mt-4 space-y-3">
-                {question.choices.map((choice, cIndex) => (
-                  <div key={choice.id} className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name={`correct-${question.id}`}
-                      checked={choice.is_correct}
-                      onChange={() => {
-                        const questions = [...editForm.questions];
+                <div className="mt-4 space-y-3">
+                  {question.choices.map((choice, cIndex) => (
+                    <div key={choice.id} className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name={`correct-${question.id}`}
+                        checked={choice.is_correct}
+                        onChange={() => {
+                          const questions = [...editForm.questions];
 
-                        questions[qIndex].choices = questions[
-                          qIndex
-                        ].choices.map((item, index) => ({
-                          ...item,
-                          is_correct: index === cIndex,
-                        }));
+                          questions[qIndex].choices = questions[
+                            qIndex
+                          ].choices.map((item, index) => ({
+                            ...item,
+                            is_correct: index === cIndex,
+                          }));
 
-                        setEditForm({
-                          ...editForm,
-                          questions,
-                        });
-                      }}
-                    />
+                          setEditForm({
+                            ...editForm,
+                            questions,
+                          });
+                        }}
+                      />
 
-                    <Input
-                      className="flex-1"
-                      value={choice.text}
-                      onChange={(e) => {
-                        const questions = [...editForm.questions];
+                      <Input
+                        className="flex-1"
+                        value={choice.text}
+                        onChange={(e) => {
+                          const questions = [...editForm.questions];
 
-                        questions[qIndex].choices[cIndex].text = e.target.value;
+                          questions[qIndex].choices[cIndex].text =
+                            e.target.value;
 
-                        setEditForm({
-                          ...editForm,
-                          questions,
-                        });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          ))}
+                          setEditForm({
+                            ...editForm,
+                            questions,
+                          });
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
 
-          {editError && <p className="text-sm text-error">{editError}</p>}
-        </form>
+            {editError && <p className="text-sm text-error">{editError}</p>}
+          </form>
+        )}
       </Modal>
     </div>
   );

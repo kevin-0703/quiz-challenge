@@ -1,9 +1,4 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
-// --- single-flight refresh lock ---
-// Ensures that if multiple requests 401 at the same time, only ONE
-// call to /auth/refresh/ actually happens. Every other caller just
-// awaits the same in-flight promise.
 let refreshPromise = null;
 
 function doRefresh() {
@@ -50,14 +45,9 @@ async function request(path, options = {}, _isRetry = false) {
     }
 
     if (refreshOk) {
-      // Retry the original request exactly once. _isRetry=true stops
-      // us from looping forever if it 401s again.
       return request(path, options, true);
     }
 
-    // Refresh genuinely failed (refresh token expired/blacklisted/invalid).
-    // Don't call the API again here — just clear client state and let the
-    // caller / app-level auth context redirect to login.
     const authError = new Error("Session expired. Please log in again.");
     authError.isAuthError = true;
     throw authError;
@@ -126,6 +116,9 @@ export const api = {
     });
   },
   getQuiz(id) {
+    return request(`/quizzes/${id}/`);
+  },
+  getQuizForEdit(id) {
     return request(`/quizzes/${id}/update/`);
   },
   getQuizForTaking(id) {

@@ -19,7 +19,6 @@ class QuizAttempt(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.expires_at:
-            # First save (new attempt) — give the participant 10 minutes from now.
             self.expires_at = timezone.now() + timedelta(minutes=10)
         super().save(*args, **kwargs)
 

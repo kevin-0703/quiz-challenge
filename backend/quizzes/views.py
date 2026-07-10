@@ -31,13 +31,13 @@ class QuizCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
-        """
+        
 
 class QuizDetailView(generics.RetrieveAPIView):
     serializer_class = QuizSerializer
     queryset = Quiz.objects.all()
     permission_classes = [permissions.AllowAny]
-    """
+
 
 class QuizUpdateView(APIView):
     permission_classes = [
@@ -126,7 +126,7 @@ class TakeQuizView(generics.RetrieveAPIView):
     def get_queryset(self):
         return Quiz.objects.filter(is_published=True)
 
-class QuizDetailView(generics.RetrieveUpdateAPIView):
+class QuizOwnerDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = QuizDetailSerializer
     permission_classes = [permissions.IsAuthenticated, IsQuizOwner]
 

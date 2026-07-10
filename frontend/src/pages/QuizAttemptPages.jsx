@@ -1,5 +1,5 @@
 import { Clock, Send } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Badge from "../components/ui/Badge.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card, { CardHeader } from "../components/ui/Card.jsx";
@@ -9,6 +9,15 @@ import Input from "../components/ui/Input.jsx";
 import LoadingSpinner from "../components/ui/LoadingSpinner.jsx";
 import { useAsync } from "../hooks.js";
 import { api } from "../services/api.js";
+
+const EXPIRY_BUFFER_MS = 10 * 1000;
+
+function formatCountdown(ms) {
+  const totalSeconds = Math.max(Math.ceil(ms / 1000), 0);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 export function QuizSetupPage({ navigate }) {
   const quizId = new URLSearchParams(window.location.search).get("id");
@@ -29,6 +38,10 @@ export function QuizSetupPage({ navigate }) {
     setError("");
     try {
       const attempt = await api.startAttempt({ ...form, quiz: Number(quizId) });
+      sessionStorage.setItem(
+        `attemptExpiresAt:${attempt.id}`,
+        attempt.expires_at,
+      );
       navigate(`/take-quiz?id=${quizId}&attempt=${attempt.id}`);
     } catch (err) {
       setError(err.message);
@@ -89,25 +102,59 @@ export function TakingQuizPage({ navigate }) {
   const [answers, setAnswers] = useState({});
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [timeLeftMs, setTimeLeftMs] = useState(null);
+  const autoSubmittedRef = useRef(false);
   const { data: quiz, loading } = useAsync(
     () => api.getQuizForTaking(quizId),
     [quizId],
   );
   const questions = quiz?.questions || [];
 
-  const submit = async () => {
-    setSubmitting(true);
-    setError("");
-    try {
-      const response = await api.submitAttempt(attemptId, answers);
-      sessionStorage.setItem("latestResult", JSON.stringify(response.result));
-      navigate("/results");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const submit = useCallback(
+    async (isAutoSubmit = false) => {
+      if (submitting) return;
+      setSubmitting(true);
+      setError("");
+      try {
+        const response = await api.submitAttempt(attemptId, answers);
+        sessionStorage.setItem("latestResult", JSON.stringify(response.result));
+        sessionStorage.removeItem(`attemptExpiresAt:${attemptId}`);
+        navigate("/results");
+      } catch (err) {
+        setError(
+          isAutoSubmit
+            ? "Time's up and we couldn't submit automatically. Please try submitting manually."
+            : err.message,
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [attemptId, answers, submitting, navigate],
+  );
+
+  useEffect(() => {
+    const expiresAtRaw = sessionStorage.getItem(
+      `attemptExpiresAt:${attemptId}`,
+    );
+    if (!expiresAtRaw) return undefined;
+
+    const deadline = new Date(expiresAtRaw).getTime() - EXPIRY_BUFFER_MS;
+
+    const tick = () => {
+      const remaining = deadline - Date.now();
+      setTimeLeftMs(Math.max(remaining, 0));
+
+      if (remaining <= 0 && !autoSubmittedRef.current) {
+        autoSubmittedRef.current = true;
+        submit(true);
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [attemptId, submit]);
 
   if (loading) return <LoadingSpinner label="Loading quiz" />;
 
@@ -121,6 +168,8 @@ export function TakingQuizPage({ navigate }) {
       />
     );
   }
+
+  const isRunningLow = timeLeftMs !== null && timeLeftMs < 60 * 1000;
 
   return (
     <div className="space-y-5">
@@ -136,7 +185,11 @@ export function TakingQuizPage({ navigate }) {
         <CardHeader
           title={quiz.title}
           description={`${Object.keys(answers).length} of ${questions.length} answered`}
-          action={<Badge variant="warning">10 min</Badge>}
+          action={
+            <Badge variant={isRunningLow ? "error" : "warning"}>
+              {timeLeftMs !== null ? formatCountdown(timeLeftMs) : "10:00"}
+            </Badge>
+          }
         />
       </Card>
       {questions.map((question, index) => (
@@ -166,7 +219,7 @@ export function TakingQuizPage({ navigate }) {
       {error ? <p className="text-sm text-error">{error}</p> : null}
       <Button
         icon={Send}
-        onClick={submit}
+        onClick={() => submit(false)}
         disabled={submitting || !Object.keys(answers).length}
       >
         {submitting ? "Submitting..." : "Submit Quiz"}

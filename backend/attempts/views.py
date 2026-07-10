@@ -40,12 +40,6 @@ class SubmitQuizView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
-        if attempt.is_expired():
-            return Response(
-                {"detail": "Quiz attempt has expired."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        
         serializer = SubmitQuizSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

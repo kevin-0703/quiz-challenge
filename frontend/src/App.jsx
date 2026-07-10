@@ -3,19 +3,29 @@ import Navbar from "./components/layout/Navbar.jsx";
 import Sidebar from "./components/layout/Sidebar.jsx";
 import Button from "./components/ui/Button.jsx";
 import Modal from "./components/ui/Modal.jsx";
-import AdminPage from "./pages/AdminPage.jsx";
 import { LoginPage, RegisterPage } from "./pages/AuthPages.jsx";
 import CreateQuizPage from "./pages/CreateQuizPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import ExplorePage from "./pages/ExplorePage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import QuizBuilderPage from "./pages/QuizBuilderPage.jsx";
-import { QuizSetupPage, ResultsPage, TakingQuizPage } from "./pages/QuizAttemptPages.jsx";
-import SettingsPage from "./pages/SettingsPage.jsx";
+import {
+  QuizSetupPage,
+  ResultsPage,
+  TakingQuizPage,
+} from "./pages/QuizAttemptPages.jsx";
 import { useRoute } from "./hooks.js";
 import { api } from "./services/api.js";
 
-const publicRoutes = ["/", "/login", "/register", "/explore", "/quiz-setup", "/take-quiz", "/results"];
+const publicRoutes = [
+  "/",
+  "/login",
+  "/register",
+  "/explore",
+  "/quiz-setup",
+  "/take-quiz",
+  "/results",
+];
 
 export default function App() {
   const { path, navigate } = useRoute();
@@ -24,15 +34,16 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    api.me().then(setUser).catch(() => setUser(null));
+    api
+      .me()
+      .then(setUser)
+      .catch(() => setUser(null));
   }, []);
 
   const logout = async () => {
     try {
       await api.logout();
-    } catch {
-      // The UI should still clear local auth state if the cookie is already gone.
-    }
+    } catch {}
     setUser(null);
     navigate("/");
   };
@@ -49,13 +60,22 @@ export default function App() {
         </div>
       ) : (
         <div className="flex min-h-screen bg-surface">
-          <Sidebar path={route} navigate={navigate} user={user} onLogout={logout} />
+          <Sidebar
+            path={route}
+            navigate={navigate}
+            user={user}
+            onLogout={logout}
+          />
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{content}</div>
           </main>
         </div>
       )}
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} navigate={navigate} />
+      <MobileMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        navigate={navigate}
+      />
     </>
   );
 }
@@ -82,13 +102,6 @@ function renderRoute(route, props) {
       return <TakingQuizPage navigate={props.navigate} />;
     case "/results":
       return <ResultsPage navigate={props.navigate} />;
-    case "/admin":
-      if (!props.user?.is_admin) {
-        return <LandingPage navigate={props.navigate} />;
-      }
-      return <AdminPage />;
-    case "/settings":
-      return <SettingsPage />;
     default:
       return <LandingPage navigate={props.navigate} />;
   }
@@ -111,7 +124,12 @@ function MobileMenu({ open, onClose, navigate }) {
           ["Login", "/login"],
           ["Register", "/register"],
         ].map(([label, path]) => (
-          <Button key={path} variant="ghost" className="justify-start" onClick={() => go(path)}>
+          <Button
+            key={path}
+            variant="ghost"
+            className="justify-start"
+            onClick={() => go(path)}
+          >
             {label}
           </Button>
         ))}

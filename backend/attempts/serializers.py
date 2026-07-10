@@ -18,17 +18,6 @@ class StartAttemptSerializer(serializers.ModelSerializer):
 
         if not quiz.is_published:
             raise serializers.ValidationError("This quiz is not available.")
-
-        existing_attempt = QuizAttempt.objects.filter(
-            participant_email=data.get("participant_email"),
-            quiz=quiz,
-            completed=False
-        ).exists()
-
-        if existing_attempt:
-            raise serializers.ValidationError(
-                "You already have an active attempt for this quiz."
-            )
         return data
 
 
@@ -39,9 +28,6 @@ class SubmitQuizSerializer(serializers.Serializer):
     )
 
     def validate_answers(self, value):
-        if not value:
-            raise serializers.ValidationError("At least one answer must be provided.")
-
         question_ids = []
         for question_id in value.keys():
             try:
