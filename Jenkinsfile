@@ -59,7 +59,6 @@ pipeline {
             set -e
 
             cd /home/kevin/quiz-challenge
-            git config --global --add safe.directory /home/kevin/quiz-challenge
 
             echo "Pulling latest code..."
             git pull origin main
@@ -160,4 +159,3 @@ pipeline {
         }
     }
 }
-
