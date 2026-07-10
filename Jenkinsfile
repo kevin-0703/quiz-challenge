@@ -69,35 +69,16 @@ pipeline {
             echo "Building images..."
             docker compose build --no-cache backend frontend
 
-            echo "Starting PostgreSQL..."
-            docker compose up -d db
+            echo "Starting containers..."
+            docker compose up -d
 
             echo "Waiting for PostgreSQL..."
 
-            for i in $(seq 1 30); do
-                if docker compose exec -T db \
-                    pg_isready -U "${DB_USER:-quiz_user}" >/dev/null 2>&1; then
-                    echo "Database is ready."
-                    break
-                fi
-
-                echo "Attempt $i/30..."
-                sleep 2
-            done
-
             echo "Running migrations..."
-            docker compose run --rm backend \
-                python manage.py migrate --noinput
+            docker compose exec backend python manage.py migrate --noinput
 
             echo "Collecting static files..."
-            docker compose run --rm backend \
-                python manage.py collectstatic --noinput --clear
-
-            echo "Starting backend/frontend..."
-            docker compose up -d --force-recreate backend frontend
-
-            echo "Cleaning unused images..."
-            docker image prune -f
+            docker compose exec backend python manage.py collectstatic --noinput --clear
 
             EOF
             '''
