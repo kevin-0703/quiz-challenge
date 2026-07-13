@@ -954,3 +954,7 @@ The following items have been identified during code review and are flagged for 
 | 8   | **No test coverage**                | `tests.py` files in all apps contain only the Django placeholder comment                                                            | Write unit and integration tests for serializers, views, and business logic          |
 | 9   | **Score validation**                | There is no upper-bound check on `marks` per question; a creator could set arbitrarily large mark values                            | Optionally enforce a `max_value` on the `marks` field                                |
 | 10  | **Results storage**                 | Attempt results are stored in `sessionStorage` under `latestResult`, which is overwritten on each quiz submission                   | Implement a proper results history or a dedicated results page fetching from the API |
+
+## Future Enhancements
+
+The current implementation allows authenticated users to create, manage, and delete only the quizzes they own. An administrative dashboard with platform-wide quiz management capabilities (including viewing, editing, and managing all quizzes regardless of ownership) is planned for a future release as the application continues to evolve.
