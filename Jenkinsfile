@@ -11,14 +11,15 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '--- Deploying application ---'
-                sshagent(credentials: ['autoconnect-prod-ssh']) {
-                    timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: 15, unit: 'MINUTES') {
+                    sshagent(credentials: ['autoconnect-prod-ssh']) {
                         sh '''
-                ssh -o StrictHostKeyChecking=no -o BatchMode=yes autoconnect@35.222.250.201 bash -s << 'EOF'
+                ssh -o StrictHostKeyChecking=no autoconnect@35.222.250.201 << 'EOF'
                 set -e
                 cd /home/kevin/quiz-challenge
                 echo "Pulling latest code..."
-                git pull origin main
+                git fetch origin main
+                git reset --hard origin/main
                 echo "Stopping old containers..."
                 docker compose down
                 echo "Building images..."
@@ -26,6 +27,10 @@ pipeline {
                 echo "Starting containers..."
                 docker compose up -d
                 echo "Waiting for PostgreSQL..."
+                until docker compose exec -T db pg_isready -U quiz_user > /dev/null 2>&1; do
+                  echo "  ...still waiting for postgres"
+                  sleep 2
+                done
                 echo "Running migrations..."
                 docker compose exec -T backend python manage.py migrate --noinput
                 echo "Collecting static files..."
