@@ -72,9 +72,7 @@ class PublishQuizView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     @transaction.atomic
     def post(self, request, pk):
-        print("CONTENT TYPE:", request.content_type)
-        print("BODY:", request.body)
-        print("DATA:", request.data)
+       
         try:
             quiz = Quiz.objects.get(pk=pk, creator=request.user,)
         except Quiz.DoesNotExist:
